@@ -1,77 +1,92 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
-    <main className="min-h-screen bg-zinc-50 text-zinc-900">
+    <div className="min-h-screen bg-white text-zinc-900">
+      {/* Navigation */}
+      <nav className="border-b border-zinc-200">
+        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">Assure</h1>
+          <div className="flex gap-4">
+            <Link href="/login" className="text-sm text-zinc-600 hover:text-zinc-900">
+              Login
+            </Link>
+            <Link href="/signup" className="text-sm font-medium text-zinc-900 hover:text-zinc-700">
+              Sign Up
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
-      <section className="mx-auto max-w-6xl px-6 py-24 text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Assure
-        </h1>
-        <p className="mt-6 text-lg text-zinc-600 max-w-2xl mx-auto">
-          Enterprise-grade, AI-powered KYC & compliance platform built on
-          Azure with zero-secret security and human-in-the-loop decisioning.
+      <section className="mx-auto max-w-4xl px-6 py-24 text-center">
+        <h2 className="text-5xl font-bold tracking-tight">
+          Enterprise KYC Built on Trust
+        </h2>
+        <p className="mt-6 text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed">
+          AI-powered identity verification with zero-secret security. Azure managed identity ensures your data stays safe. Human compliance officers always have the final say.
         </p>
 
-        <div className="mt-10 flex justify-center gap-4">
-          <a
-            href="/login"
-            className="rounded-md bg-black px-6 py-3 text-white text-sm font-medium"
+        <div className="mt-12 flex justify-center gap-4">
+          <Link
+            href="/signup"
+            className="px-8 py-3 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition"
           >
-            Get Started
-          </a>
-          <a
+            Start Verification
+          </Link>
+          <Link
             href="#features"
-            className="rounded-md border border-zinc-300 px-6 py-3 text-sm font-medium"
+            className="px-8 py-3 border border-zinc-300 font-medium rounded-lg hover:bg-zinc-50 transition"
           >
             Learn More
-          </a>
+          </Link>
         </div>
       </section>
 
-      {/* Features */}
-      <section
-        id="features"
-        className="mx-auto max-w-6xl px-6 py-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
-      >
-        {[
-          {
-            title: "Document Intelligence",
-            desc: "Automatically extract structured identity data from messy, real-world documents using Azure AI Document Intelligence."
-          },
-          {
-            title: "Risk-Based Verification",
-            desc: "Adaptive verification workflows that auto-approve low-risk users and escalate high-risk cases."
-          },
-          {
-            title: "Explainable AI Decisions",
-            desc: "Every AI-driven risk signal is accompanied by a clear, human-readable explanation."
-          },
-          {
-            title: "Biometric Consistency Checks",
-            desc: "Face capture and document-photo consistency checks to reduce identity fraud."
-          },
-          {
-            title: "Human-in-the-Loop Compliance",
-            desc: "AI assists — compliance officers decide. Manual review flows are built-in by design."
-          },
-          {
-            title: "Zero-Secret Security",
-            desc: "Built on Azure Managed Identity and RBAC. No API keys. No leaked credentials."
-          }
-        ].map((f) => (
-          <div
-            key={f.title}
-            className="rounded-lg border border-zinc-200 bg-white p-6"
-          >
-            <h3 className="text-lg font-semibold">{f.title}</h3>
-            <p className="mt-3 text-sm text-zinc-600">{f.desc}</p>
-          </div>
-        ))}
+      {/* Features Grid */}
+      <section id="features" className="mx-auto max-w-6xl px-6 py-20">
+        <h3 className="text-center text-3xl font-bold mb-16">
+          Why Assure
+        </h3>
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              title: "Document Intelligence",
+              desc: "Automatically extracts structured data from identity documents using Azure AI."
+            },
+            {
+              title: "Risk-Based Workflow",
+              desc: "Adaptive verification that approves low-risk users instantly and escalates high-risk cases."
+            },
+            {
+              title: "Explainable AI",
+              desc: "Every decision is accompanied by clear, human-readable explanations."
+            },
+            {
+              title: "Biometric Verification",
+              desc: "Face capture and document-photo consistency checks to prevent fraud."
+            },
+            {
+              title: "Human-in-the-Loop",
+              desc: "AI assists — compliance officers decide. Built for regulatory compliance."
+            },
+            {
+              title: "Zero-Secret Security",
+              desc: "Azure Managed Identity and RBAC. No API keys. No exposed credentials."
+            }
+          ].map((f) => (
+            <div key={f.title} className="p-6 border border-zinc-200 rounded-lg hover:border-zinc-400 transition">
+              <h4 className="font-semibold text-lg">{f.title}</h4>
+              <p className="mt-3 text-zinc-600 text-sm leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-200 py-8 text-center text-sm text-zinc-500">
-        Built for Microsoft Imagine Cup · Powered by Azure · Responsible AI by design
+      <footer className="border-t border-zinc-200 mt-20 py-8 text-center text-sm text-zinc-500">
+        <p>Built for Microsoft Imagine Cup · Powered by Azure · Responsible AI by design</p>
       </footer>
-    </main>
+    </div>
   );
 }
