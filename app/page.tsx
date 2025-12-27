@@ -19,24 +19,34 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="mx-auto max-w-4xl px-6 py-24 text-center">
-        <h2 className="text-5xl font-bold tracking-tight">
-          Enterprise KYC Built on Trust
-        </h2>
-        <p className="mt-6 text-lg text-zinc-600 max-w-2xl mx-auto leading-relaxed">
-          AI-powered identity verification with zero-secret security. Azure managed identity ensures your data stays safe. Human compliance officers always have the final say.
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+          <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-left">
+            ASSURE
+          </div>
+
+          <div className="hidden sm:flex items-center text-zinc-300 text-3xl font-bold">|</div>
+
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-left max-w-3xl">
+            AI-enabled Systems for Secure, Unbiased, and Responsible Enterprise decisioning
+            <span className="block mt-2">~ Built on Trust</span>
+          </h2>
+        </div>
+
+        <p className="mt-8 text-lg text-zinc-600 max-w-3xl leading-relaxed mx-auto text-center">
+          ASSURE is an AI-powered compliance co-pilot that helps reduce false alerts, accelerate onboarding, and maintain audit-grade trust without removing human control.
         </p>
 
-        <div className="mt-12 flex justify-center gap-4">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup"
-            className="px-8 py-3 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition"
+            className="px-8 py-3 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 transition text-center"
           >
             Start Verification
           </Link>
           <Link
             href="#features"
-            className="px-8 py-3 border border-zinc-300 font-medium rounded-lg hover:bg-zinc-50 transition"
+            className="px-8 py-3 border border-zinc-300 font-medium rounded-lg hover:bg-zinc-50 transition text-center"
           >
             Learn More
           </Link>
