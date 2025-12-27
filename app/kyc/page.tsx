@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
+import { useAuth } from "../providers";
 
 export default function KYCPage() {
   const [step, setStep] = useState<"personal" | "document" | "face" | "review">("personal");
@@ -428,6 +429,10 @@ export default function KYCPage() {
   const currentStepIndex = steps.indexOf(step);
   const isDocumentStepValid = uploadedFile !== null;
   const isFaceStepValid = selfie !== null;
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [kycId, setKycId] = useState<string | null>(null);
+  const { user, token } = useAuth();
 
   return (
     <div className="min-h-screen bg-white">
@@ -485,18 +490,88 @@ export default function KYCPage() {
               Cancel
             </Link>
             <button
-              onClick={() => {
+              onClick={async () => {
                 const idx = steps.indexOf(step);
                 if (idx < steps.length - 1) {
                   setStep(steps[idx + 1] as any);
-                } else {
-                  alert("KYC Submitted! Awaiting verification.");
+                  return;
+                }
+
+                // Final submission: call Azure Function /api/kyc/start
+                setSubmitError(null);
+                setSubmitting(true);
+                try {
+                  const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
+                  if (!functionsBase) {
+                    throw new Error("NEXT_PUBLIC_FUNCTIONS_BASE_URL is not configured");
+                  }
+
+                  const userId = user?.email || user?.name || user?.id;
+                  const headers: any = { "Content-Type": "application/json" };
+                  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                  const startResp = await fetch(`${functionsBase}/api/kyc/start`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({ userId, idType: personalData.idType, personalData })
+                  });
+
+                  if (!startResp.ok) {
+                    const err = await startResp.json().catch(() => ({}));
+                    throw new Error(err?.error || `Start API failed: ${startResp.status}`);
+                  }
+
+                  const startJson = await startResp.json();
+                  setKycId(startJson.kycId || null);
+
+                  // If we have a direct upload URL, upload the document file
+                  if (startJson.uploadUrl && uploadedFile) {
+                    const uploadResp = await fetch(startJson.uploadUrl, {
+                      method: "PUT",
+                      headers: {
+                        "x-ms-blob-type": "BlockBlob",
+                        "Content-Type": uploadedFile.type
+                      },
+                      body: uploadedFile
+                    });
+
+                    if (!uploadResp.ok) {
+                      throw new Error("Document upload failed");
+                    }
+
+                    // Notify backend that upload is complete so it can analyze the document
+                    try {
+                      const uploadUrl = startJson.uploadUrl as string;
+                      const parsed = new URL(uploadUrl);
+                      // blob path is everything after container (e.g. /container/<blobPath>)
+                      const parts = parsed.pathname.split("/");
+                      const blobPath = parts.slice(2).join("/");
+
+                      const notifyHeaders: any = { "Content-Type": "application/json" };
+                      if (token) notifyHeaders["Authorization"] = `Bearer ${token}`;
+                      await fetch(`${functionsBase}/api/kyc/upload-document`, {
+                        method: "POST",
+                        headers: notifyHeaders,
+                        body: JSON.stringify({ kycId: startJson.kycId, blobName: blobPath, blobUrl: uploadUrl })
+                      });
+                    } catch (notifyErr) {
+                      console.warn("Failed to notify backend for analysis:", notifyErr);
+                    }
+                  }
+
+                  // Success: move to a completed state or dashboard
+                  alert("KYC started — upload complete. KYC ID: " + (startJson.kycId || "-"));
+                } catch (err: any) {
+                  console.error(err);
+                  setSubmitError(err?.message || String(err));
+                } finally {
+                  setSubmitting(false);
                 }
               }}
-              disabled={(step === "document" && !isDocumentStepValid) || (step === "face" && !isFaceStepValid)}
+              disabled={((step === "document" && !isDocumentStepValid) || (step === "face" && !isFaceStepValid)) || submitting}
               className="px-6 py-2 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 disabled:opacity-50 transition"
             >
-              {step === "review" ? "Submit" : "Next"}
+              {submitting ? "Submitting…" : (step === "review" ? "Submit" : "Next")}
             </button>
           </div>
         </div>

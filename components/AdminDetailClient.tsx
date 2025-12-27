@@ -1,46 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../app/providers";
 
 export default function AdminDetailClient({ requestId }: { requestId: string }) {
   const [decision, setDecision] = useState<"" | "approve" | "reject">("");
+  const [request, setRequest] = useState<any>(null);
+  const { token } = useAuth();
 
-  const request = {
-    id: requestId,
-    name: "John Doe",
-    email: "john@example.com",
-    status: "pending",
-    riskLevel: "high",
-    documentScore: 92,
-    biometricScore: 78,
-    personalInfo: {
-      firstName: "John",
-      lastName: "Doe",
-      dob: "1990-05-15",
-      country: "United States",
-    },
-    riskSignals: [
-      {
-        signal: "Inconsistent Document Metadata",
-        severity: "high",
-        explanation: "Document issue date differs from expected timeline by 3 years",
-      },
-      {
-        signal: "Unusual Geographic Pattern",
-        severity: "medium",
-        explanation: "IP location inconsistent with stated country of residence",
-      },
-      {
-        signal: "First-Time User",
-        severity: "low",
-        explanation: "New account with no prior verification history",
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchDetail = async () => {
+      const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
+      try {
+        const resp = await fetch(`${functionsBase}/api/admin/kyc/${requestId}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!resp.ok) throw new Error("Failed to fetch request");
+        const json = await resp.json();
+        setRequest(json.request ? { ...json.request, extraction: json.extraction } : json);
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    if (token) fetchDetail();
+  }, [token, requestId]);
 
-  return (
-    <div className="min-h-screen bg-white">
+  if (!request) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="border-b border-zinc-200">
+          <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Assure · Admin</h1>
+            <Link href="/admin" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">Back to Dashboard</Link>
+          </div>
+        </div>
+        <div className="mx-auto max-w-4xl px-6 py-12">Loading...</div>
+      </div>
+    );
+  }
       {/* Header */}
       <div className="border-b border-zinc-200">
         <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
@@ -219,6 +215,29 @@ export default function AdminDetailClient({ requestId }: { requestId: string }) 
                 className="w-full px-4 py-3 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800 disabled:opacity-50 transition"
               >
                 Submit Decision
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!decision) return;
+                  const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
+                  const body: any = { decision: decision === "approve" ? "APPROVE" : "REJECT", note: null };
+                  try {
+                    const resp = await fetch(`${functionsBase}/api/admin/kyc/${request.id}/decision`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                      body: JSON.stringify(body)
+                    });
+                    if (!resp.ok) throw new Error("Decision failed");
+                    alert("Decision submitted");
+                  } catch (e) {
+                    console.error(e);
+                    alert("Failed to submit decision");
+                  }
+                }}
+                className="w-full mt-3 px-4 py-2 border border-zinc-300 text-zinc-900 rounded-lg font-medium hover:bg-zinc-50 transition"
+              >
+                Submit Decision Now
               </button>
 
               <button className="w-full mt-3 px-4 py-2 border border-zinc-300 text-zinc-900 rounded-lg font-medium hover:bg-zinc-50 transition">

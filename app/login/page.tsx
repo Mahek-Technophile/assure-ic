@@ -19,24 +19,20 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
     
-    // TODO: Replace with actual Azure AD authentication
-    // Simulating login delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     if (!email || !password) {
       setError("Please fill in all fields");
       setIsLoading(false);
       return;
     }
 
-    // Extract name from email for demo
-    const name = email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1);
-    
-    // Call auth context
-    login(email, name);
-    
-    // Redirect to dashboard
-    router.push("/dashboard");
+    try {
+      await login(email, password);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
