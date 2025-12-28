@@ -9,7 +9,7 @@ if (!endpoint) {
   // runtime will throw if missing
 }
 
-export async function analyzeDocumentFromUrl(documentUrl: string) {
+export async function analyzeDocumentFromUrl(documentUrl: string): Promise<any> {
   if (!endpoint || !processorId) throw new Error("Document Intelligence configuration missing");
 
   // Acquire AAD token for cognitive services
@@ -37,7 +37,7 @@ export async function analyzeDocumentFromUrl(documentUrl: string) {
   const operationLocation = resp.headers.get("operation-location") || resp.headers.get("Operation-Location");
   if (!operationLocation) {
     // Some API versions return the result directly
-    const json = await resp.json();
+    const json: any = await resp.json();
     return json;
   }
 
@@ -46,7 +46,7 @@ export async function analyzeDocumentFromUrl(documentUrl: string) {
     for (let i = 0; i < 30; i++) {
       const statusResp = await fetch(operationLocation, { headers: { Authorization: `Bearer ${token.token}` } });
       if (!statusResp.ok) throw new Error(`Status check failed: ${statusResp.status}`);
-      const json = await statusResp.json();
+      const json: any = await statusResp.json();
       const status = json.status || json.analyzeResult?.status || json.analysisResult?.status;
       if (status === "succeeded" || status === "succeededWithDocumentErrors") return json;
       if (status === "failed") throw new Error("Document Intelligence analysis failed");

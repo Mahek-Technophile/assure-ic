@@ -49,7 +49,7 @@ export async function analyzeRiskWithOpenAI(flattenedFields: string) {
     throw new Error(`OpenAI call failed: ${resp.status} ${text}`);
   }
 
-  const json = await resp.json();
+  const json: any = await resp.json();
   // Expect response.choices[0].text to contain the JSON
   const text = json.choices?.[0]?.text || json.choices?.[0]?.message?.content || JSON.stringify(json);
 

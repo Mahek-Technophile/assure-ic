@@ -1,6 +1,6 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { validateBearerToken, isAdmin } from "../../services/auth";
-import { getKycRequestById, getExtractionByKycId } from "../../services/cosmos";
+import { getKycRequestById, getExtractionByKycId } from "../../services/sql";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
   try {
@@ -12,6 +12,11 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
     if (!kycId) throw { status: 400, message: "id is required" };
 
     const reqDoc = await getKycRequestById(kycId);
+    if (!reqDoc) throw { status: 404, message: "request not found" };
+    // Only allow admin to view requests that are pending review
+    if ((reqDoc.status || reqDoc?.status?.toUpperCase?.()) !== "PENDING_REVIEW") {
+      throw { status: 404, message: "request not available for review" };
+    }
     const extraction = await getExtractionByKycId(kycId);
 
     context.res = { status: 200, body: { request: reqDoc, extraction } };

@@ -1,6 +1,6 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { validateBearerToken, isAdmin } from "../../services/auth";
-import { getKycRequestById, updateKycRequest, createDecisionRecord } from "../../services/cosmos";
+import { getKycRequestById, updateKycRequest, createDecisionRecord, recordStateTransition } from "../../services/sql";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
   try {
@@ -21,10 +21,16 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
     const status = (decision.startsWith("APPROV")) ? "APPROVED" : "REJECTED";
 
-    // Update request
-    await updateKycRequest(kycId, { status } as any);
+    // Ensure this request is in PENDING_REVIEW state
+    const reqDoc = await getKycRequestById(kycId);
+    if (!reqDoc) throw { status: 404, message: "request not found" };
+    if ((reqDoc.status || reqDoc?.status?.toUpperCase?.()) !== "PENDING_REVIEW") throw { status: 400, message: "request not in PENDING_REVIEW" };
 
-    // Create audit record
+    // Update request to final decision
+    await updateKycRequest(kycId, { status } as any);
+    try { await recordStateTransition(kycId, "PENDING_REVIEW", status, actor, note); } catch (e) { context.log.warn("failed to record state transition:", e); }
+
+    // Create audit record for decision
     const rec = {
       kycId,
       decision: status,

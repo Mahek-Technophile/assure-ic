@@ -42,14 +42,14 @@ export async function validateBearerToken(authHeader?: string) {
     if (issuer) verifyOptions.issuer = issuer;
 
     if (client) {
-      jwt.verify(token, getKey as any, verifyOptions, (err, decoded) => {
+      jwt.verify(token, getKey as any, verifyOptions, (err: any, decoded: any) => {
         if (err) return reject(err);
         resolve(decoded);
       });
     } else {
       // fallback to HMAC shared secret for local dev
       const secret = process.env.AUTH_SHARED_SECRET as string;
-      jwt.verify(token, secret, verifyOptions, (err, decoded) => {
+      jwt.verify(token, secret, verifyOptions, (err: any, decoded: any) => {
         if (err) return reject(err);
         resolve(decoded);
       });

@@ -1,7 +1,7 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserByEmail } from "../services/cosmos";
+import { getUserByEmail } from "../services/sql";
 
 const SECRET = process.env.AUTH_SHARED_SECRET || "dev-secret"; // in production store in Key Vault and never check into code
 const TOKEN_EXPIRY = process.env.AUTH_TOKEN_EXPIRY || "1h";

@@ -41,10 +41,29 @@ export async function generateUserDelegationSAS(blobName: string, permissions = 
 export async function uploadExtractionJson(kycId: string, json: any) {
   const service = getBlobServiceClient();
   const containerClient = service.getContainerClient(extractionsContainer);
-  const blobName = `${kycId}/extraction-${Date.now()}.json`;
-  const block = containerClient.getBlockBlobClient(blobName);
-  await block.upload(JSON.stringify(json), Buffer.byteLength(JSON.stringify(json)), {
-    blobHTTPHeaders: { blobContentType: "application/json" }
-  });
-  return `${accountUrl}/${extractionsContainer}/${blobName}`;
+  const jsonStr = JSON.stringify(json);
+
+  // Primary audit path: deterministic, single file per KYC ID.
+  // We must NOT overwrite this file once written — treat as append-only audit-grade data.
+  const primaryBlobName = `${kycId}/document-intel.json`;
+  const primaryBlock = containerClient.getBlockBlobClient(primaryBlobName);
+
+  try {
+    // Attempt to create the primary audit file only if it does NOT already exist.
+    // Use conditional upload with If-None-Match="*" so the operation will fail if the blob exists.
+    await primaryBlock.upload(jsonStr, Buffer.byteLength(jsonStr), {
+      blobHTTPHeaders: { blobContentType: "application/json" },
+      conditions: { ifNoneMatch: "*" }
+    } as any);
+    return `${accountUrl}/${extractionsContainer}/${primaryBlobName}`;
+  } catch (err: any) {
+    // If the primary path already exists (or conditional upload not supported in environment),
+    // fall back to a timestamped, immutable file name to guarantee append-only behavior.
+    const fallbackBlobName = `${kycId}/document-intel-${Date.now()}.json`;
+    const fallbackBlock = containerClient.getBlockBlobClient(fallbackBlobName);
+    await fallbackBlock.upload(jsonStr, Buffer.byteLength(jsonStr), {
+      blobHTTPHeaders: { blobContentType: "application/json" }
+    });
+    return `${accountUrl}/${extractionsContainer}/${fallbackBlobName}`;
+  }
 }

@@ -1,6 +1,6 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { validateBearerToken, isAdmin } from "../../services/auth";
-import { getRequestsByStatus } from "../../services/cosmos";
+import { getRequestsByStatus } from "../../services/sql";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
   try {

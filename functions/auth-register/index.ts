@@ -1,7 +1,7 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
-import { createUser, getUserByEmail } from "../services/cosmos";
+import { createUser, getUserByEmail } from "../services/sql";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
   try {

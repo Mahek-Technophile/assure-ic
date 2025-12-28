@@ -7,16 +7,17 @@
     "start": "func start"
   },
   "dependencies": {
+    "@azure/functions": "^4.10.0",
     "@azure/identity": "^3.0.0",
     "@azure/storage-blob": "^12.10.0",
-    "@azure/cosmos": "^3.22.0",
-    "uuid": "^9.0.0",
-    "@azure/functions": "^4.0.0",
+    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.0",
-    "jwks-rsa": "^3.0.0"
-    ,"bcryptjs": "^2.4.3"
+    "jwks-rsa": "^3.0.0",
+    "mssql": "^9.1.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@types/node": "^25.0.3",
     "typescript": "^5.0.0"
   }
 }

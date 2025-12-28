@@ -1,7 +1,7 @@
 import { AzureFunction, Context, HttpRequest } from "@azure/functions";
 import { generateUserDelegationSAS, uploadExtractionJson } from "../services/storage";
 import { analyzeDocumentFromUrl } from "../services/documentIntelligence";
-import { createExtractionRecord, updateKycRequest } from "../services/cosmos";
+import { createExtractionRecord, updateKycRequest, recordStateTransition } from "../services/sql";
 import type { KYC_Document_Extraction } from "../models/kyc";
 
 const httpTrigger: AzureFunction = async function (context: Context, req: HttpRequest): Promise<void> {
@@ -33,12 +33,19 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
     context.log("Analyzing document at", documentUrl);
 
+    // record transition: CREATED/DOCUMENT_UPLOADED
+    try { await updateKycRequest(kycId, { status: "DOCUMENT_UPLOADED" as any }); await recordStateTransition(kycId, "CREATED", "DOCUMENT_UPLOADED"); } catch (e) { context.log.warn("failed to mark DOCUMENT_UPLOADED:", e); }
+
     const analysis = await analyzeDocumentFromUrl(documentUrl);
 
-    // Save raw extraction JSON to Blob for immutability/audit
+    // Save raw extraction JSON to Blob for immutability/audit.
+    // Primary audit path will be: kyc-extractions/{kycId}/document-intel.json
+    // The implementation deliberately avoids overwriting existing audit files; if the
+    // primary path already exists the function will write to a timestamped file
+    // (e.g. document-intel-<timestamp>.json). This ensures append-only, audit-grade storage.
     const extractionBlobUrl = await uploadExtractionJson(kycId, analysis);
 
-    // Persist extraction record to Cosmos (immutable record)
+    // Persist extraction record to Azure SQL (immutable record)
     const rec: KYC_Document_Extraction = {
       kycId,
       rawDocumentJson: analysis,
@@ -49,8 +56,8 @@ const httpTrigger: AzureFunction = async function (context: Context, req: HttpRe
 
     await createExtractionRecord(rec);
 
-    // Update KYC request status to PENDING_REVIEW
-    await updateKycRequest(kycId, { status: "PENDING_REVIEW" as any });
+    // Mark as EXTRACTED (append-only extraction saved)
+    try { await updateKycRequest(kycId, { status: "EXTRACTED" as any }); await recordStateTransition(kycId, "DOCUMENT_UPLOADED", "EXTRACTED"); } catch (e) { context.log.warn("failed to mark EXTRACTED:", e); }
 
     context.res = {
       status: 200,
