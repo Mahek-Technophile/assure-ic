@@ -1,66 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../providers";
 
 export default function AdminDashboard() {
   const [filter, setFilter] = useState("all");
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { token } = useAuth();
 
-  const requests = [
-    {
-      id: "KYC-001",
-      name: "John Doe",
-      status: "pending",
-      riskLevel: "high",
-      date: "Dec 22, 2024",
-      documentScore: 92,
-      biometricScore: 78
-    },
-    {
-      id: "KYC-002",
-      name: "Jane Smith",
-      status: "pending",
-      riskLevel: "low",
-      date: "Dec 22, 2024",
-      documentScore: 98,
-      biometricScore: 95
-    },
-    {
-      id: "KYC-003",
-      name: "Bob Johnson",
-      status: "approved",
-      riskLevel: "low",
-      date: "Dec 21, 2024",
-      documentScore: 96,
-      biometricScore: 91
-    },
-    {
-      id: "KYC-004",
-      name: "Alice Brown",
-      status: "rejected",
-      riskLevel: "high",
-      date: "Dec 20, 2024",
-      documentScore: 45,
-      biometricScore: 38
-    },
-    {
-      id: "KYC-005",
-      name: "Charlie Davis",
-      status: "pending",
-      riskLevel: "medium",
-      date: "Dec 22, 2024",
-      documentScore: 85,
-      biometricScore: 72
-    }
-  ];
+  useEffect(() => {
+    const fetchPending = async () => {
+      if (!token) return;
+      setLoading(true);
+      const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
+      try {
+        const resp = await fetch(`${functionsBase}/api/admin/kyc/pending`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!resp.ok) throw new Error("Failed to fetch pending requests");
+        const json = await resp.json();
+        setRequests(json.items || []);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPending();
+  }, [token]);
 
   const filteredRequests = filter === "all" ? requests : requests.filter(r => r.status === filter);
 
   const stats = {
     total: requests.length,
-    pending: requests.filter(r => r.status === "pending").length,
-    approved: requests.filter(r => r.status === "approved").length,
-    rejected: requests.filter(r => r.status === "rejected").length
+    pending: requests.filter(r => r.status === "PENDING_REVIEW" || r.status === "pending").length,
+    approved: requests.filter(r => r.status === "APPROVED" || r.status === "approved").length,
+    rejected: requests.filter(r => r.status === "REJECTED" || r.status === "rejected").length
   };
 
   return (

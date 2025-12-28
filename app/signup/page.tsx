@@ -42,15 +42,28 @@ export default function SignupPage() {
     }
 
     setIsLoading(true);
-    // TODO: Replace with actual Azure AD registration
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Auto-login after signup
-    const fullName = `${formData.firstName} ${formData.lastName}`;
-    login(formData.email, fullName);
-    
-    // Redirect to dashboard
-    router.push("/dashboard");
+    try {
+      const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
+      if (!functionsBase) throw new Error("NEXT_PUBLIC_FUNCTIONS_BASE_URL is not configured");
+
+      const resp = await fetch(`${functionsBase}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, name: `${formData.firstName} ${formData.lastName}`, password: formData.password })
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || "Registration failed");
+      }
+
+      // Auto-login
+      await login(formData.email, formData.password);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
