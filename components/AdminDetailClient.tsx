@@ -37,21 +37,15 @@ export default function AdminDetailClient({ requestId }: { requestId: string }) 
       </div>
     );
   }
+
+  return (
+    <>
       {/* Header */}
       <div className="border-b border-zinc-200">
         <div className="mx-auto max-w-4xl px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold">Assure · Admin</h1>
           <Link href="/admin" className="text-sm font-medium text-zinc-600 hover:text-zinc-900">
             Back to Dashboard
-          </Link>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        {/* Request Header */}
-        <div className="mb-8 pb-8 border-b border-zinc-200">
-          <div className="flex items-start justify-between mb-4">
             <div>
               <h2 className="text-3xl font-bold">{request.name}</h2>
               <p className="text-zinc-600 mt-1">{request.id}</p>
@@ -59,6 +53,15 @@ export default function AdminDetailClient({ requestId }: { requestId: string }) 
             <div
               className={`text-right px-4 py-2 rounded-lg font-semibold ${
                 request.riskLevel === "high"
+                  ? "bg-red-100 text-red-700"
+                  : request.riskLevel === "medium"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {request.riskLevel.toUpperCase()} RISK
+            </div>
+          </>
                   ? "bg-red-100 text-red-700"
                   : request.riskLevel === "medium"
                   ? "bg-yellow-100 text-yellow-700"
@@ -248,5 +251,6 @@ export default function AdminDetailClient({ requestId }: { requestId: string }) 
         </div>
       </div>
     </div>
+    </>
   );
 }
