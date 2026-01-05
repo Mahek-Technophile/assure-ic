@@ -9,6 +9,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -19,20 +22,46 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
     
-    if (!email || !password) {
-      setError("Please fill in all fields");
+    // Legacy password flow kept for compatibility but we now use OTP.
+    setError("");
+    if (!otpSent) {
+      setError("Please request an OTP first");
       setIsLoading(false);
       return;
     }
 
+    // verify OTP stored in sessionStorage (mock)
     try {
-      await login(email, password);
+      const key = `mock_otp_${email}`;
+      const expected = sessionStorage.getItem(key);
+      if (!expected) throw new Error("No OTP found for this email. Please request a new OTP.");
+      if (expected !== otp) throw new Error("Invalid OTP");
+
+      // OTP verified — perform login (mocked in provider)
+      await login(email, "otp");
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err?.message || "Login failed");
+      setError(err?.message || "OTP verification failed");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSendOtp = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError("");
+    if (!email) {
+      setError("Please enter your email to receive an OTP");
+      return;
+    }
+
+    // generate 6-digit OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const key = `mock_otp_${email}`;
+    sessionStorage.setItem(key, code);
+    setGeneratedOtp(code);
+    setOtpSent(true);
+    // In a real integration we'd call the backend to send the OTP via SMS/email.
   };
 
   return (
@@ -75,44 +104,30 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-900">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="mt-2 w-full px-4 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900 focus:border-transparent"
-                required
-              />
-            </div>
+            {!otpSent && (
+              <div>
+                <p className="text-sm text-zinc-600 mb-2">We'll send a one-time code to your email for verification.</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={handleSendOtp} className="px-4 py-2 bg-zinc-900 text-white rounded-lg">Send OTP</button>
+                </div>
+              </div>
+            )}
 
-            {/* Remember Me */}
-            <div className="flex items-center">
-              <input
-                id="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 accent-zinc-900"
-              />
-              <label htmlFor="remember" className="ml-2 text-sm text-zinc-600">
-                Remember me
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full mt-6 px-4 py-2 bg-zinc-900 text-white font-medium rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition"
-            >
-              {isLoading ? "Logging in..." : "Login"}
-            </button>
+            {otpSent && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-zinc-900">Enter OTP</label>
+                <input id="otp" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" className="mt-2 w-full px-4 py-2 border border-zinc-300 rounded-lg" />
+                <div className="mt-3 flex gap-2">
+                  <button type="submit" disabled={isLoading} className="px-4 py-2 bg-zinc-900 text-white rounded-lg">{isLoading ? 'Verifying...' : 'Verify & Login'}</button>
+                  <button type="button" onClick={handleSendOtp} className="px-4 py-2 border rounded-lg">Resend OTP</button>
+                </div>
+                {generatedOtp && (
+                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded">
+                    Test OTP (visible only in testing): {generatedOtp}
+                  </div>
+                )}
+              </div>
+            )}
           </form>
 
           {/* Sign Up Link */}

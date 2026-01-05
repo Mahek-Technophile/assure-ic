@@ -33,6 +33,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const login = async (email: string, password: string) => {
+    // Backend authentication temporarily disabled for local OTP testing.
+    /*
     // Call functions auth/login
     const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL;
     if (!functionsBase) throw new Error("NEXT_PUBLIC_FUNCTIONS_BASE_URL not configured");
@@ -51,6 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(json.token);
     localStorage.setItem("user", JSON.stringify(newUser));
     localStorage.setItem("token", json.token);
+    */
+
+    // Mock login for OTP testing: accept any email and set a mock token.
+    const newUser = { email, name: email.split("@")[0] || "User" };
+    const mockToken = `mock-token-${Date.now()}`;
+    setUser(newUser);
+    setToken(mockToken);
+    localStorage.setItem("user", JSON.stringify(newUser));
+    localStorage.setItem("token", mockToken);
   };
 
   const logout = () => {
